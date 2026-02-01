@@ -12,8 +12,8 @@
 
 보안 취약점을 발견하셨다면 아래 방법으로 신고해 주세요:
 
-1. **비공개 신고**: security@example.com으로 이메일 전송
-2. **GitHub Security Advisory**: [보안 탭](https://github.com/yourusername/gemini-usage-cli/security/advisories)에서 비공개 취약점 리포트 생성
+1. **비공개 신고**: 이메일 전송
+2. **GitHub Security Advisory**: [보안 탭](https://github.com/coreline-ai/gemini-usage-cli/security/advisories)에서 비공개 취약점 리포트 생성
 
 **응답 시간**: 영업일 기준 48시간 이내 응답
 
