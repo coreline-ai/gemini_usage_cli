@@ -27,26 +27,43 @@ export function parseUsageLogs(): UsageSummary {
     const lines = content.trim().split("\n").filter(line => line.length > 0);
 
     let totalTokens = 0;
-    let totalRequests = lines.length;
-    let lastUsed = "Never";
+    let validRequests = 0;  // 유효한 요청만 카운트
+    let latestTimestamp: Date | null = null;
 
     for (const line of lines) {
         try {
             const entry = JSON.parse(line);
+
+            // usage 필드가 있는 유효한 요청만 카운트
             if (entry.usage) {
+                validRequests++;
                 totalTokens += (entry.usage.input_tokens || 0) + (entry.usage.output_tokens || 0);
             }
+
+            // 타임스탬프 파싱 및 최신 날짜 추적
             if (entry.timestamp) {
-                lastUsed = new Date(entry.timestamp).toLocaleDateString();
+                const date = new Date(entry.timestamp);
+                // 유효한 날짜인지 확인
+                if (!isNaN(date.getTime())) {
+                    if (!latestTimestamp || date > latestTimestamp) {
+                        latestTimestamp = date;
+                    }
+                }
             }
         } catch (e) {
-            // Ignore malformed lines
+            // Ignore malformed JSON lines
         }
+    }
+
+    // 마지막 사용 날짜 포맷팅
+    let lastUsed = "Never";
+    if (latestTimestamp) {
+        lastUsed = latestTimestamp.toLocaleDateString();
     }
 
     return {
         totalTokens,
-        totalRequests,
+        totalRequests: validRequests,
         lastUsed
     };
 }

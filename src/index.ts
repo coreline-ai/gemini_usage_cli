@@ -48,11 +48,16 @@ async function performScan(isWatch: boolean = false) {
     // Read real logs
     const summary = parseUsageLogs();
 
+    // Status 표기를 실제 모드에 맞게 동적 설정
+    const statusText = isWatch
+        ? `🟢 ${colors.success("Reactive (Watching Logs)")}`
+        : `⚪ ${colors.muted("Snapshot (One-time Scan)")}`;
+
     const displayData = [
         `${colors.muted("Total Tokens")}   ⚡ ${colors.primary(formatNumber(summary.totalTokens))}`,
         `${colors.muted("Total Requests")} 📦 ${colors.success(summary.totalRequests.toString())}`,
         `${colors.muted("Last Activity")}  📅 ${colors.white(summary.lastUsed)}`,
-        `${colors.muted("Status")}         🟢 ${colors.success("Reactive (Watching Logs)")}`,
+        `${colors.muted("Status")}         ${statusText}`,
     ];
 
     console.log(createBox(displayData));
@@ -81,6 +86,7 @@ async function startWatchMode() {
     });
 
     const logPath = getUsageLogPath();
+    const logDir = path.dirname(logPath);
 
     // Reactive Watcher using fs.watchFile (polling) for macOS stability
     let lastSize = 0;
@@ -90,12 +96,25 @@ async function startWatchMode() {
         if (isWatching) return;
         isWatching = true;
 
+        // 로그 디렉터리가 없으면 생성
+        if (!fs.existsSync(logDir)) {
+            try {
+                fs.mkdirSync(logDir, { recursive: true });
+                console.log(`  ${colors.dim("Created log directory: " + logDir)}`);
+            } catch (err) {
+                console.log(`  ${colors.warning("!")} ${colors.warning("Cannot create log directory. Check permissions.")}`);
+            }
+        }
+
         // 초기 파일 크기 저장
         if (fs.existsSync(logPath)) {
             lastSize = fs.statSync(logPath).size;
+        } else {
+            console.log(`  ${colors.dim("Waiting for first usage log...")}`);
         }
 
         // fs.watchFile은 polling 방식으로 macOS에서 안정적
+        // 파일이 없어도 감시 가능 (파일 생성 시 감지)
         fs.watchFile(logPath, { interval: 500 }, async (curr, prev) => {
             // 파일이 수정되었는지 확인 (크기 또는 mtime 변경)
             if (curr.mtime > prev.mtime || curr.size !== lastSize) {
