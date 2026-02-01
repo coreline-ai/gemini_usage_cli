@@ -267,6 +267,6 @@ MIT © 2026
 
 **Gemini API 커뮤니티를 위해 ❤️로 제작**
 
-[버그 신고](https://github.com/yourusername/gemini-usage-cli/issues) • [기능 요청](https://github.com/yourusername/gemini-usage-cli/issues)
+[버그 신고](https://github.com/coreline-ai/gemini-usage-cli/issues) • [기능 요청](https://github.com/coreline-ai/gemini-usage-cli/issues)
 
 </div>
