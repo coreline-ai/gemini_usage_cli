@@ -82,33 +82,28 @@ async function startWatchMode() {
 
     const logPath = getUsageLogPath();
 
-    // Reactive Watcher
-    let watcher: fs.FSWatcher | null = null;
+    // Reactive Watcher using fs.watchFile (polling) for macOS stability
+    let lastSize = 0;
+    let isWatching = false;
+
     const setupWatcher = () => {
-        if (watcher) watcher.close();
+        if (isWatching) return;
+        isWatching = true;
+
+        // 초기 파일 크기 저장
         if (fs.existsSync(logPath)) {
-            watcher = fs.watch(logPath, async (event) => {
-                // macOS에서는 파일 append 시 'rename' 이벤트가 발생할 수 있음
-                if (event === "change" || event === "rename") {
-                    // 파일이 존재하는지 확인 (rename 시 삭제된 경우 대비)
-                    if (fs.existsSync(logPath)) {
-                        await performScan(true);
-                        rl.prompt(true);
-                    }
-                }
-            });
-        } else {
-            const logDir = path.dirname(logPath);
-            if (fs.existsSync(logDir)) {
-                watcher = fs.watch(logDir, async (event, filename) => {
-                    if (filename === "usage.jsonl") {
-                        setupWatcher(); // Re-setup to watch the file itself
-                        await performScan(true);
-                        rl.prompt(true);
-                    }
-                });
-            }
+            lastSize = fs.statSync(logPath).size;
         }
+
+        // fs.watchFile은 polling 방식으로 macOS에서 안정적
+        fs.watchFile(logPath, { interval: 500 }, async (curr, prev) => {
+            // 파일이 수정되었는지 확인 (크기 또는 mtime 변경)
+            if (curr.mtime > prev.mtime || curr.size !== lastSize) {
+                lastSize = curr.size;
+                await performScan(true);
+                rl.prompt(true);
+            }
+        });
     };
 
     setupWatcher();
@@ -144,7 +139,7 @@ async function startWatchMode() {
 
     // Cleanup on exit
     process.on("exit", () => {
-        if (watcher) watcher.close();
+        fs.unwatchFile(logPath);
         rl.close();
     });
 }
