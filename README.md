@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔷 Gemini Usage CLI
+# 🔷 Antigravity Gemini Usage CLI
 
 **Google Gemini API 사용량을 추적하는 아름다운 터미널 대시보드**
 
